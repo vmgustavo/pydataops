@@ -14,7 +14,7 @@ class CreateData:
         self.fkr = Faker(["en_US"])
 
     @staticmethod
-    def _dec2alpha(i: int, length: int = 10):
+    def _dec2alpha(i: int, length: int = 10) -> str:
         """Convert a decimal number to its base alphabet representation
         Source: https://codereview.stackexchange.com/a/182757
         """
@@ -37,15 +37,7 @@ class CreateData:
 
         return "A" * (length - len(res)) + res
 
-    def indexes(self) -> List[Tuple[int, str, float]]:
-        indexes = list()
-        for i in tqdm(range(self.rows), ncols=80, desc="Generating Indexes"):
-            indexes.append((i, self._dec2alpha(i), float(i) + random()))
-        return indexes
-
-    def gen(self):
-        indexes = self.indexes()
-
+    def gen(self) -> None:
         with open(self.filepaths[0], "w") as f0, open(self.filepaths[1], "w") as f1:
             writer0 = csv.writer(f0, dialect="unix", delimiter=",")
             writer0.writerow(
@@ -73,9 +65,10 @@ class CreateData:
                 ]
             )
 
-            for index in tqdm(indexes, ncols=80, desc="Generating Random Data"):
-                lst = list(index)
-                line0 = lst.copy()
+            for i in tqdm(self.rows, ncols=80, desc="Generating Random Data"):
+                indexes = [i, self._dec2alpha(i), float(i) + random()]
+
+                line0 = indexes.copy()
                 line0.extend(
                     [
                         self.fkr.boolean(),
@@ -88,7 +81,7 @@ class CreateData:
                 )
                 writer0.writerow(line0)
 
-                line1 = lst.copy()
+                line1 = indexes.copy()
                 line1.extend(
                     [
                         self.fkr.boolean(),
