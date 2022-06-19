@@ -128,14 +128,14 @@ def eval_library(ctx, library, groupby, join, aggregate):
     for curr_lib in library:
         curr_instance = mapper[f"{curr_lib}operator"](paths=ctx.obj["filepaths"])
 
-        for curr_op in groupby:
-            curr_instance.groupby(curr_op)
+        for curr_dtype in groupby:
+            curr_instance.groupby(curr_dtype)
 
-        for curr_op in join:
-            curr_instance.join(curr_op)
+        for curr_dtype in join:
+            curr_instance.join(curr_dtype)
 
-        for curr_op in aggregate:
-            curr_instance.aggregate(curr_op)
+        for curr_dtype in aggregate:
+            curr_instance.aggregate(curr_dtype)
 
 
 def main():
