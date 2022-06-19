@@ -6,7 +6,6 @@ import click
 from tqdm import tqdm
 
 from src.availability import DTYPES, LIBRARIES
-from src.exceptions import LibNotImplementedError
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)-8s | %(name)s : %(message)s",
@@ -127,9 +126,6 @@ def eval_library(ctx, library, groupby, join, aggregate):
 
     mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
     for curr_lib in library:
-        if f"{curr_lib}operator" not in mapper.keys():
-            raise LibNotImplementedError(curr_lib)
-
         curr_instance = mapper[f"{curr_lib}operator"](paths=ctx.obj["filepaths"])
 
         for curr_op in groupby:
