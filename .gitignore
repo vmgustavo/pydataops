@@ -133,3 +133,6 @@ poetry.lock
 
 # PyCharm
 .idea
+
+# Custom
+data
