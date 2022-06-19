@@ -1,9 +1,7 @@
 import os
-import math
 import logging
 
 import click
-from tqdm import tqdm
 
 from src.availability import DTYPES, LIBRARIES
 
@@ -34,61 +32,21 @@ def cli(ctx, directory):
 
 @cli.command()
 @click.option("-r", "--rows", type=int, required=True, default=int(1e3), help="Number of rows")
+@click.option("--overwrite", is_flag=True, help="Overwrite existing data files")
 @click.pass_context
-def create_data(ctx, rows):
-    import csv
-
-    from faker import Faker
+def create_data(ctx, rows, overwrite):
+    from src import CreateData
 
     logger = logging.getLogger("create-data")
-
-    fkr = Faker(["en_US"])
-
-    def fake_row():
-        return [
-            fkr.name(),
-            fkr.safe_color_name(),
-            fkr.pyfloat(right_digits=3, min_value=-100, max_value=100),
-            fkr.pyint(min_value=0, max_value=100, step=1),
-            fkr.android_platform_token(),
-            fkr.boolean(),
-        ]
-
-    def create_csv(filepath: str):
-        # TODO: guarantee existence of index column for each dataset to make it
-        #  possible to join both datasets later
-        with open(filepath, "w") as f:
-            writer = csv.writer(f, dialect="unix", delimiter=",")
-            writer.writerow(
-                [
-                    "name",
-                    "color",
-                    "value_float",
-                    "value_int",
-                    "value_bool",
-                    "android_platform",
-                ]
-            )
-            for _ in tqdm(range(rows)):
-                writer.writerow(fake_row())
-
-    if not os.path.exists(ctx.obj["filepaths"][0]):
-        logger.info("Create first CSV data file")
-        create_csv(ctx.obj["filepaths"][0])
+    if (
+        overwrite
+        or (not os.path.exists(ctx.obj["filepaths"][0]))
+        or (not os.path.exists(ctx.obj["filepaths"][0]))
+    ):
+        logger.info("Generating new random data")
+        CreateData(rows=rows, filepaths=ctx.obj["filepaths"]).gen()
     else:
-        logger.info(f"First CSV data file already exists")
-
-    if not os.path.exists(ctx.obj["filepaths"][1]):
-        logger.info("Create second CSV data file")
-        create_csv(ctx.obj["filepaths"][1])
-    else:
-        logger.info("Second CSV data file already exists")
-
-    filesizes = [
-        f"{os.path.getsize(filepath) / math.pow(2, 10) / math.pow(2, 10):.01f} MiB"
-        for filepath in ctx.obj["filepaths"]
-    ]
-    logger.info(f"Files size: {filesizes}")
+        logger.info("Random data already exists. Skip create-data step")
 
 
 @cli.command()

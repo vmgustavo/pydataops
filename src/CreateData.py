@@ -1,0 +1,99 @@
+import csv
+from random import random
+from typing import List, Tuple
+from string import ascii_uppercase
+
+from tqdm import tqdm
+from faker import Faker
+
+
+class CreateData:
+    def __init__(self, rows: int, filepaths: Tuple[str, str]):
+        self.rows = rows
+        self.filepaths = filepaths
+        self.fkr = Faker(["en_US"])
+
+    @staticmethod
+    def _dec2alpha(i: int, length: int = 10):
+        """Convert a decimal number to its base alphabet representation
+        Source: https://codereview.stackexchange.com/a/182757
+        """
+        a_upper = ord("A")
+        nletters = len(ascii_uppercase)
+
+        def _decompose(number):
+            """Generate digits from `number` in base alphabet, least significants
+            bits first.
+
+            Since A is 1 rather than 0 in base alphabet, we are dealing with
+            `number - 1` at each iteration to be able to extract the proper digits.
+            """
+
+            while number:
+                number, remainder = divmod(number - 1, nletters)
+                yield remainder
+
+        res = "".join(chr(a_upper + part) for part in _decompose(i + 1))[::-1]
+
+        return "A" * (length - len(res)) + res
+
+    def indexes(self) -> List[Tuple[int, str, float]]:
+        indexes = list()
+        for i in tqdm(range(self.rows), ncols=80, desc="Generating Indexes"):
+            indexes.append((i, self._dec2alpha(i), float(i) + random()))
+        return indexes
+
+    def gen(self):
+        indexes = self.indexes()
+
+        with open(self.filepaths[0], "w") as f0, open(self.filepaths[1], "w") as f1:
+            writer0 = csv.writer(f0, dialect="unix", delimiter=",")
+            writer0.writerow(
+                [
+                    "index_int",
+                    "index_str",
+                    "index_float",
+                    "value_bool_0",
+                    "value_float_0",
+                    "value_int_0",
+                    "value_str_name",
+                    "value_str_color",
+                    "value_str_android",
+                ]
+            )
+            writer1 = csv.writer(f1, dialect="unix", delimiter=",")
+            writer1.writerow(
+                [
+                    "index_int",
+                    "index_str",
+                    "index_float",
+                    "value_bool_1",
+                    "value_float_1",
+                    "value_int_1",
+                ]
+            )
+
+            for index in tqdm(indexes, ncols=80, desc="Generating Random Data"):
+                lst = list(index)
+                line0 = lst.copy()
+                line0.extend(
+                    [
+                        self.fkr.boolean(),
+                        self.fkr.pyfloat(right_digits=3, min_value=-100, max_value=100),
+                        self.fkr.pyint(min_value=0, max_value=100, step=1),
+                        self.fkr.name(),
+                        self.fkr.safe_color_name(),
+                        self.fkr.android_platform_token(),
+                    ]
+                )
+                writer0.writerow(line0)
+
+                line1 = lst.copy()
+                line1.extend(
+                    [
+                        self.fkr.boolean(),
+                        self.fkr.pyfloat(right_digits=3, min_value=-100, max_value=100),
+                        self.fkr.pyint(min_value=0, max_value=100, step=1),
+                    ]
+                )
+                writer1.writerow(line1)
