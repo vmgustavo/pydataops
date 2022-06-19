@@ -1,30 +1,45 @@
+import os
 import math
 import logging
 
 import click
 from tqdm import tqdm
 
+from src.availability import DTYPES, LIBRARIES
+from src.exceptions import LibNotImplementedError
+
+logging.basicConfig(
+    format="%(asctime)s | %(levelname)-8s | %(name)s : %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    level=logging.INFO,
+)
+
 
 @click.group()
+@click.option("-d", "--directory", type=str, default="data", help="Name of the data directory")
 @click.pass_context
-def cli(ctx):
-    pass
+def cli(ctx, directory):
+    logger = logging.getLogger("cli")
+
+    if not os.path.exists(directory):
+        logger.info(f"Create {directory} directory")
+        os.makedirs(directory, exist_ok=True)
+    else:
+        logger.info(f"Directory {directory} already exists")
+
+    ctx.obj["filepaths"] = (
+        os.path.join(directory, "data_0.csv"),
+        os.path.join(directory, "data_1.csv"),
+    )
 
 
 @cli.command()
-@click.option("-r", "--rows", type=int, required=True, default=int(1e6), help="Number of rows")
-@click.option("-d", "--directory", type=str, default="data", help="Name of the data directory")
-def create_data(rows, directory):
-    import os
+@click.option("-r", "--rows", type=int, required=True, default=int(1e3), help="Number of rows")
+@click.pass_context
+def create_data(ctx, rows):
     import csv
 
     from faker import Faker
-
-    logging.basicConfig(
-        format="%(asctime)s | %(levelname)-8s | %(name)s : %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        level=logging.INFO,
-    )
 
     logger = logging.getLogger("create-data")
 
@@ -40,16 +55,10 @@ def create_data(rows, directory):
             fkr.boolean(),
         ]
 
-    if not os.path.exists(directory):
-        logger.info(f"Create {directory} directory")
-        os.makedirs(directory, exist_ok=True)
-    else:
-        logger.info(f"Directory {directory} already exists")
-
-    csvfile = os.path.join(directory, "data.csv")
-    if not os.path.exists(csvfile):
-        logger.info(f"Create CSV data file")
-        with open(csvfile, "w") as f:
+    def create_csv(filepath: str):
+        # TODO: guarantee existence of index column for each dataset to make it
+        #  possible to join both datasets later
+        with open(filepath, "w") as f:
             writer = csv.writer(f, dialect="unix", delimiter=",")
             writer.writerow(
                 [
@@ -63,17 +72,74 @@ def create_data(rows, directory):
             )
             for _ in tqdm(range(rows)):
                 writer.writerow(fake_row())
-    else:
-        logger.info(f"CSV data file already exists")
 
-    filesize = os.path.getsize(csvfile) / math.pow(2, 10) / math.pow(2, 10)
-    logger.info(f"File size: {filesize:.01f} MiB")
+    if not os.path.exists(ctx.obj["filepaths"][0]):
+        logger.info("Create first CSV data file")
+        create_csv(ctx.obj["filepaths"][0])
+    else:
+        logger.info(f"First CSV data file already exists")
+
+    if not os.path.exists(ctx.obj["filepaths"][1]):
+        logger.info("Create second CSV data file")
+        create_csv(ctx.obj["filepaths"][1])
+    else:
+        logger.info("Second CSV data file already exists")
+
+    filesizes = [
+        f"{os.path.getsize(filepath) / math.pow(2, 10) / math.pow(2, 10):.01f} MiB"
+        for filepath in ctx.obj["filepaths"]
+    ]
+    logger.info(f"Files size: {filesizes}")
 
 
 @cli.command()
+@click.option(
+    "--library",
+    required=True,
+    multiple=True,
+    type=click.Choice(LIBRARIES, case_sensitive=False),
+    help="Define which libraries to execute the operations",
+)
+@click.option(
+    "--groupby",
+    required=False,
+    multiple=True,
+    type=click.Choice(DTYPES, case_sensitive=False),
+    help="Define which type of data to execute the groupy operation",
+)
+@click.option(
+    "--join",
+    required=False,
+    multiple=True,
+    type=click.Choice(DTYPES, case_sensitive=False),
+    help="Define which type of data to execute the join operation",
+)
+@click.option(
+    "--aggregate",
+    required=False,
+    multiple=True,
+    type=click.Choice(DTYPES, case_sensitive=False),
+    help="Define which type of data to execute the aggregate operation",
+)
 @click.pass_context
-def eval_pandas(ctx):
-    pass
+def eval_library(ctx, library, groupby, join, aggregate):
+    from src.operators import BaseOperator
+
+    mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
+    for curr_lib in library:
+        if f"{curr_lib}operator" not in mapper.keys():
+            raise LibNotImplementedError(curr_lib)
+
+        curr_instance = mapper[f"{curr_lib}operator"](paths=ctx.obj["filepaths"])
+
+        for curr_op in groupby:
+            curr_instance.groupby(curr_op)
+
+        for curr_op in join:
+            curr_instance.join(curr_op)
+
+        for curr_op in aggregate:
+            curr_instance.aggregate(curr_op)
 
 
 def main():
