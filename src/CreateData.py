@@ -24,20 +24,19 @@ class CreateData:
         def _decompose(number):
             """Generate digits from `number` in base alphabet, least significants
             bits first.
-
-            Since A is 1 rather than 0 in base alphabet, we are dealing with
-            `number - 1` at each iteration to be able to extract the proper digits.
             """
 
             while number:
-                number, remainder = divmod(number - 1, nletters)
+                number, remainder = divmod(number, nletters)
                 yield remainder
 
-        res = "".join(chr(a_upper + part) for part in _decompose(i + 1))[::-1]
+        res = "".join(chr(a_upper + part) for part in _decompose(i))[::-1]
 
         return "A" * (length - len(res)) + res
 
     def gen(self) -> None:
+        # TODO: create columns specifying groups
+        # TODO: save data based on the number of rows
         with open(self.filepaths[0], "w") as f0, open(self.filepaths[1], "w") as f1:
             writer0 = csv.writer(f0, dialect="unix", delimiter=",")
             writer0.writerow(
