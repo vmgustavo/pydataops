@@ -3,6 +3,9 @@ name = "pydataops"
 version = "0.1.0"
 description = "Test multiple Python data processing libraries"
 authors = ["Gustavo Maia <>"]
+packages = [
+    { include = "src" }
+]
 
 [tool.poetry.scripts]
 pydataops = 'src.cli:main'
