@@ -10,8 +10,8 @@ class EvalData:
     library: str
     operation: str
     col_dtype: str
-    dataset_0: str
-    dataset_1: Optional[str]
+    dataset_p: str
+    dataset_s: Optional[str]
     time: float
 
 
