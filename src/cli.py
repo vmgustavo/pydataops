@@ -109,11 +109,20 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
     from src.operators import BaseOperator
     from src import DataPath, EvalData, Collector
 
+    logger = logging.getLogger(__name__)
     collector = Collector()
 
     mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
     for curr_lib, curr_rows, curr_groups in product(library, rows, groups):
         datapath = DataPath(ctx.obj["directory"], curr_rows, curr_groups)
+
+        if (not datapath.primary().exists()) or (not datapath.secondary().exists()):
+            logger.warning(
+                f"The combination of library '{curr_lib}', rows '{curr_rows}' and groups '{curr_groups}'"
+                + " has no available dataset. The current processing step will be skipped."
+            )
+            continue
+
         dataset_p = str(datapath.primary())
         dataset_s = str(datapath.secondary())
         assert datapath.primary().exists()
