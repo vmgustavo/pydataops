@@ -24,29 +24,27 @@ def cli(ctx, directory):
     else:
         logger.info(f"Directory {directory} already exists")
 
-    ctx.obj["filepaths"] = (
-        os.path.join(directory, "data_0.csv"),
-        os.path.join(directory, "data_1.csv"),
-    )
+    ctx.obj["directory"] = directory
 
 
 @cli.command()
-@click.option("-r", "--rows", type=int, required=True, default=int(1e3), help="Number of rows")
+@click.option("-r", "--rows", type=int, required=True, multiple=True, help="Number of rows")
 @click.option("--overwrite", is_flag=True, help="Overwrite existing data files")
 @click.pass_context
 def create_data(ctx, rows, overwrite):
     from src import CreateData
 
     logger = logging.getLogger("create-data")
-    if (
-        overwrite
-        or (not os.path.exists(ctx.obj["filepaths"][0]))
-        or (not os.path.exists(ctx.obj["filepaths"][0]))
-    ):
-        logger.info("Generating new random data")
-        CreateData(rows=rows, filepaths=ctx.obj["filepaths"]).gen()
-    else:
-        logger.info("Random data already exists. Skip create-data step")
+    for nrows in rows:
+        if (
+            overwrite
+            or (not os.path.exists(ctx.obj["filepaths"][0]))
+            or (not os.path.exists(ctx.obj["filepaths"][0]))
+        ):
+            logger.info(f"Generating new random data with {nrows} rows")
+            CreateData(rows=nrows, datadir=ctx.obj["datadir"]).gen()
+        else:
+            logger.info("Random data already exists. Skip create-data step")
 
 
 @cli.command()
@@ -82,6 +80,20 @@ def create_data(ctx, rows, overwrite):
     help="Define which type of data to execute the aggregate operation",
 )
 @click.option(
+    "--rows",
+    required=True,
+    multiple=True,
+    type=int,
+    help="Number of rows of the datasets",
+)
+@click.option(
+    "--groups",
+    required=True,
+    multiple=True,
+    type=int,
+    help="Number of groups of the datasets",
+)
+@click.option(
     "--samples",
     required=False,
     default=1,
@@ -89,20 +101,38 @@ def create_data(ctx, rows, overwrite):
     help="Number of samples to execute for each operation specified",
 )
 @click.pass_context
-def eval_library(ctx, library, groupby, join, aggregate, samples):
+def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
+    from itertools import product
+
     from tqdm import tqdm
 
-    from src import EvalData, Collector
     from src.operators import BaseOperator
+    from src import DataPath, EvalData, Collector
 
+    logger = logging.getLogger(__name__)
     collector = Collector()
 
     mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
-    for curr_lib in library:
-        curr_instance = mapper[f"{curr_lib}operator"](paths=ctx.obj["filepaths"])
+    for curr_lib, curr_rows, curr_groups in product(library, rows, groups):
+        datapath = DataPath(ctx.obj["directory"], curr_rows, curr_groups)
+
+        if (not datapath.primary().exists()) or (not datapath.secondary().exists()):
+            logger.warning(
+                f"The combination of library '{curr_lib}', rows '{curr_rows}' and groups '{curr_groups}'"
+                + " has no available dataset. The current processing step will be skipped."
+            )
+            continue
+
+        dataset_p = str(datapath.primary())
+        dataset_s = str(datapath.secondary())
+        assert datapath.primary().exists()
+
+        curr_instance = mapper[f"{curr_lib}operator"](
+            paths=(datapath.primary(), datapath.secondary())
+        )
 
         for curr_dtype in tqdm(groupby, ncols=80, desc="GroupBy"):
-            for _ in tqdm(range(samples), ncols=80, desc=f"{curr_dtype}"):
+            for _ in tqdm(range(samples), desc=f"{curr_dtype}"):
                 exec_time = curr_instance.groupby(curr_dtype)
                 collector.save(
                     EvalData(
@@ -110,8 +140,8 @@ def eval_library(ctx, library, groupby, join, aggregate, samples):
                         operation="groupby",
                         col_dtype=curr_dtype,
                         time=exec_time,
-                        dataset_0=ctx.obj["filepaths"][0],
-                        dataset_1=None,
+                        dataset_p=dataset_p,
+                        dataset_s=None,
                     )
                 )
 
@@ -124,8 +154,8 @@ def eval_library(ctx, library, groupby, join, aggregate, samples):
                         operation="join",
                         col_dtype=curr_dtype,
                         time=exec_time,
-                        dataset_0=ctx.obj["filepaths"][0],
-                        dataset_1=ctx.obj["filepaths"][1],
+                        dataset_p=dataset_p,
+                        dataset_s=dataset_s,
                     )
                 )
 
@@ -138,8 +168,8 @@ def eval_library(ctx, library, groupby, join, aggregate, samples):
                         operation="aggregate",
                         col_dtype=curr_dtype,
                         time=exec_time,
-                        dataset_0=ctx.obj["filepaths"][0],
-                        dataset_1=None,
+                        dataset_p=dataset_p,
+                        dataset_s=None,
                     )
                 )
 
