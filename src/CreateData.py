@@ -1,16 +1,20 @@
 import csv
+import logging
 from random import random
-from typing import List, Tuple
 from string import ascii_uppercase
 
 from tqdm import tqdm
 from faker import Faker
 
+from .DataPath import DataPath
+
 
 class CreateData:
-    def __init__(self, rows: int, filepaths: Tuple[str, str]):
+    def __init__(self, rows: int, datadir: str):
+        self.logger = logging.getLogger(__name__)
         self.rows = rows
-        self.filepaths = filepaths
+        self.groups = 1
+        self.datadir = datadir
         self.fkr = Faker(["en_US"])
 
     @staticmethod
@@ -36,8 +40,20 @@ class CreateData:
 
     def gen(self) -> None:
         # TODO: create columns specifying groups
-        # TODO: save data based on the number of rows
-        with open(self.filepaths[0], "w") as f0, open(self.filepaths[1], "w") as f1:
+        filepaths = (
+            DataPath(self.datadir, self.rows, self.groups).primary(),
+            DataPath(self.datadir, self.rows, self.groups).secondary(),
+        )
+
+        if filepaths[0].exists() and filepaths[1].exists():
+            self.logger.info(
+                "Skip data creation."
+                + f" Data with {self.rows} rows and {self.groups} groups already exists."
+                + f" Paths: {list(map(str, filepaths))}"
+            )
+            return
+
+        with open(filepaths[0], "w") as f0, open(filepaths[1], "w") as f1:
             writer0 = csv.writer(f0, dialect="unix", delimiter=",")
             writer0.writerow(
                 [
@@ -64,7 +80,7 @@ class CreateData:
                 ]
             )
 
-            for i in tqdm(self.rows, ncols=80, desc="Generating Random Data"):
+            for i in tqdm(range(self.rows), desc="Generating Random Data"):
                 indexes = [i, self._dec2alpha(i), float(i) + random()]
 
                 line0 = indexes.copy()
