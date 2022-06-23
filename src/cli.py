@@ -53,6 +53,8 @@ def create_data(ctx, rows, groups, overwrite):
 
     logger = logging.getLogger("create-data")
 
+    # TODO: add information in the path about the origin of the calculation of
+    #  the number of groups, if it is a result of a float or an integer spec
     for elem in map(float, groups):
         if elem.is_integer():
             curr_groups = [int(elem)] * len(rows)
@@ -145,6 +147,7 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
     collector = Collector()
 
     mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
+    # TODO: use new definition of groups from create data
     for curr_lib, curr_rows, curr_groups in product(library, rows, groups):
         datapath = DataPath(ctx.obj["directory"], curr_rows, curr_groups)
 
