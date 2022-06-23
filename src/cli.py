@@ -1,5 +1,6 @@
 import os
 import logging
+from typing import Union
 
 import click
 
@@ -28,23 +29,55 @@ def cli(ctx, directory):
 
 
 @cli.command()
-@click.option("-r", "--rows", type=int, required=True, multiple=True, help="Number of rows")
-@click.option("--overwrite", is_flag=True, help="Overwrite existing data files")
+@click.option(
+    "--rows",
+    type=int,
+    required=True,
+    multiple=True,
+    help="Number of rows",
+)
+@click.option(
+    "--groups",
+    required=True,
+    multiple=True,
+    help="Percentage of the number of rows to use as number of groups or absolute number of groups",
+)
+@click.option(
+    "--overwrite",
+    is_flag=True,
+    help="Overwrite existing data files",
+)
 @click.pass_context
-def create_data(ctx, rows, overwrite):
-    from src import CreateData
+def create_data(ctx, rows, groups, overwrite):
+    from src import DataPath, CreateData
 
     logger = logging.getLogger("create-data")
-    for nrows in rows:
-        if (
-            overwrite
-            or (not os.path.exists(ctx.obj["filepaths"][0]))
-            or (not os.path.exists(ctx.obj["filepaths"][0]))
-        ):
-            logger.info(f"Generating new random data with {nrows} rows")
-            CreateData(rows=nrows, datadir=ctx.obj["datadir"]).gen()
+
+    for elem in map(float, groups):
+        if elem.is_integer():
+            curr_groups = [int(elem)] * len(rows)
         else:
-            logger.info("Random data already exists. Skip create-data step")
+            curr_groups = [int(elem * row) for row in rows]
+
+        for nrows, ngroups in zip(rows, curr_groups):
+            filepaths = (
+                DataPath(ctx.obj["directory"], nrows, ngroups).primary(),
+                DataPath(ctx.obj["directory"], nrows, ngroups).secondary(),
+            )
+
+            if (
+                overwrite
+                or (not os.path.exists(filepaths[0]))
+                or (not os.path.exists(filepaths[1]))
+            ):
+                logger.info(f"Generating new random data with {nrows} rows and {ngroups} groups.")
+                CreateData(rows=nrows, groups=ngroups, datadir=ctx.obj["directory"]).gen()
+            else:
+                logger.info(
+                    "Skip data creation."
+                    + f" Data with {nrows} rows and {ngroups} groups already exists."
+                    + f" Paths: {list(map(str, filepaths))}"
+                )
 
 
 @cli.command()
@@ -90,8 +123,7 @@ def create_data(ctx, rows, overwrite):
     "--groups",
     required=True,
     multiple=True,
-    type=int,
-    help="Number of groups of the datasets",
+    help="Percentage of the number of rows to use as number of groups or absolute number of groups",
 )
 @click.option(
     "--samples",
