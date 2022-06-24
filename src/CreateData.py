@@ -1,19 +1,17 @@
 import csv
 import logging
-from random import random
+from random import choice, random
 from string import ascii_uppercase
 
 from tqdm import tqdm
 from faker import Faker
 
-from .DataPath import DataPath
-
 
 class CreateData:
-    def __init__(self, rows: int, datadir: str):
+    def __init__(self, rows: int, groups: int, datadir: str):
         self.logger = logging.getLogger(__name__)
         self.rows = rows
-        self.groups = 1
+        self.groups = groups
         self.datadir = datadir
         self.fkr = Faker(["en_US"])
 
@@ -38,28 +36,17 @@ class CreateData:
 
         return "A" * (length - len(res)) + res
 
-    def gen(self) -> None:
-        # TODO: create columns specifying groups
-        filepaths = (
-            DataPath(self.datadir, self.rows, self.groups).primary(),
-            DataPath(self.datadir, self.rows, self.groups).secondary(),
-        )
-
-        if filepaths[0].exists() and filepaths[1].exists():
-            self.logger.info(
-                "Skip data creation."
-                + f" Data with {self.rows} rows and {self.groups} groups already exists."
-                + f" Paths: {list(map(str, filepaths))}"
-            )
-            return
-
-        with open(filepaths[0], "w") as f0, open(filepaths[1], "w") as f1:
+    def gen(self, primary: str, secondary: str) -> None:
+        with open(primary, "w") as f0, open(secondary, "w") as f1:
             writer0 = csv.writer(f0, dialect="unix", delimiter=",")
             writer0.writerow(
                 [
                     "index_int",
                     "index_str",
                     "index_float",
+                    "group_int",
+                    "group_str",
+                    "group_float",
                     "value_bool_0",
                     "value_float_0",
                     "value_int_0",
@@ -82,8 +69,11 @@ class CreateData:
 
             for i in tqdm(range(self.rows), desc="Generating Random Data"):
                 indexes = [i, self._dec2alpha(i), float(i) + random()]
+                i_group = choice(range(self.groups))
+                groups = [i_group, self._dec2alpha(i_group), float(i_group) + random()]
 
                 line0 = indexes.copy()
+                line0.extend(groups)
                 line0.extend(
                     [
                         self.fkr.boolean(),
