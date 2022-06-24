@@ -6,8 +6,6 @@ from string import ascii_uppercase
 from tqdm import tqdm
 from faker import Faker
 
-from .DataPath import DataPath
-
 
 class CreateData:
     def __init__(self, rows: int, groups: int, datadir: str):
@@ -38,13 +36,8 @@ class CreateData:
 
         return "A" * (length - len(res)) + res
 
-    def gen(self) -> None:
-        filepaths = (
-            DataPath(self.datadir, self.rows, self.groups).primary(),
-            DataPath(self.datadir, self.rows, self.groups).secondary(),
-        )
-
-        with open(filepaths[0], "w") as f0, open(filepaths[1], "w") as f1:
+    def gen(self, primary: str, secondary: str) -> None:
+        with open(primary, "w") as f0, open(secondary, "w") as f1:
             writer0 = csv.writer(f0, dialect="unix", delimiter=",")
             writer0.writerow(
                 [

@@ -52,18 +52,16 @@ def create_data(ctx, rows, groups, overwrite):
 
     logger = logging.getLogger("create-data")
 
-    # TODO: add information in the path about the origin of the calculation of
-    #  the number of groups, if it is a result of a float or an integer spec
-    for elem in map(float, groups):
-        if elem.is_integer():
-            curr_groups = [int(elem)] * len(rows)
+    for groups_arg in map(float, groups):
+        if groups_arg.is_integer():
+            groups_num = [int(groups_arg)] * len(rows)
         else:
-            curr_groups = [int(elem * row) for row in rows]
+            groups_num = [int(groups_arg * row) for row in rows]
 
-        for nrows, ngroups in zip(rows, curr_groups):
+        for nrows, ngroups in zip(rows, groups_num):
             filepaths = (
-                DataPath(ctx.obj["directory"], nrows, ngroups).primary(),
-                DataPath(ctx.obj["directory"], nrows, ngroups).secondary(),
+                DataPath(ctx.obj["directory"], nrows, ngroups, groups_arg).primary(),
+                DataPath(ctx.obj["directory"], nrows, ngroups, groups_arg).secondary(),
             )
 
             if (
@@ -72,7 +70,9 @@ def create_data(ctx, rows, groups, overwrite):
                 or (not os.path.exists(filepaths[1]))
             ):
                 logger.info(f"Generating new random data with {nrows} rows and {ngroups} groups.")
-                CreateData(rows=nrows, groups=ngroups, datadir=ctx.obj["directory"]).gen()
+                CreateData(rows=nrows, groups=ngroups, datadir=ctx.obj["directory"]).gen(
+                    primary=filepaths[0], secondary=filepaths[1]
+                )
             else:
                 logger.info(
                     "Skip data creation."
