@@ -146,14 +146,14 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
     collector = Collector()
 
     mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
-    for elem in map(float, groups):
-        if elem.is_integer():
-            curr_groups = [int(elem)] * len(rows)
+    for groups_arg in map(float, groups):
+        if groups_arg.is_integer():
+            groups_num = [int(groups_arg)] * len(rows)
         else:
-            curr_groups = [int(elem * row) for row in rows]
+            groups_num = [int(groups_arg * row) for row in rows]
 
-        for curr_lib, (curr_rows, curr_groups) in product(library, zip(rows, curr_groups)):
-            datapath = DataPath(ctx.obj["directory"], curr_rows, curr_groups)
+        for curr_lib, (curr_rows, curr_groups) in product(library, zip(rows, groups_num)):
+            datapath = DataPath(ctx.obj["directory"], curr_rows, curr_groups, groups_arg)
 
             if (not datapath.primary().exists()) or (not datapath.secondary().exists()):
                 logger.warning(
