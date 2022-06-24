@@ -1,6 +1,5 @@
 import os
 import logging
-from typing import Union
 
 import click
 
@@ -147,66 +146,71 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
     collector = Collector()
 
     mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
-    # TODO: use new definition of groups from create data
-    for curr_lib, curr_rows, curr_groups in product(library, rows, groups):
-        datapath = DataPath(ctx.obj["directory"], curr_rows, curr_groups)
+    for elem in map(float, groups):
+        if elem.is_integer():
+            curr_groups = [int(elem)] * len(rows)
+        else:
+            curr_groups = [int(elem * row) for row in rows]
 
-        if (not datapath.primary().exists()) or (not datapath.secondary().exists()):
-            logger.warning(
-                f"The combination of library '{curr_lib}', rows '{curr_rows}' and groups '{curr_groups}'"
-                + " has no available dataset. The current processing step will be skipped."
+        for curr_lib, (curr_rows, curr_groups) in product(library, zip(rows, curr_groups)):
+            datapath = DataPath(ctx.obj["directory"], curr_rows, curr_groups)
+
+            if (not datapath.primary().exists()) or (not datapath.secondary().exists()):
+                logger.warning(
+                    f"The combination of library '{curr_lib}', rows '{curr_rows}' and groups '{curr_groups}'"
+                    + " has no available dataset. The current processing step will be skipped."
+                )
+                continue
+
+            dataset_p = str(datapath.primary())
+            dataset_s = str(datapath.secondary())
+            assert datapath.primary().exists()
+
+            curr_instance = mapper[f"{curr_lib}operator"](
+                paths=(datapath.primary(), datapath.secondary())
             )
-            continue
 
-        dataset_p = str(datapath.primary())
-        dataset_s = str(datapath.secondary())
-        assert datapath.primary().exists()
-
-        curr_instance = mapper[f"{curr_lib}operator"](
-            paths=(datapath.primary(), datapath.secondary())
-        )
-
-        for curr_dtype in tqdm(groupby, ncols=80, desc="GroupBy"):
-            for _ in tqdm(range(samples), desc=f"{curr_dtype}"):
-                exec_time = curr_instance.groupby(curr_dtype)
-                collector.save(
-                    EvalData(
-                        library=curr_lib,
-                        operation="groupby",
-                        col_dtype=curr_dtype,
-                        time=exec_time,
-                        dataset_p=dataset_p,
-                        dataset_s=None,
+            for curr_dtype in tqdm(groupby, ncols=80, desc="GroupBy"):
+                for _ in tqdm(range(samples), desc=f"{curr_dtype}"):
+                    exec_time = curr_instance.groupby(curr_dtype)
+                    collector.save(
+                        EvalData(
+                            library=curr_lib,
+                            operation="groupby",
+                            col_dtype=curr_dtype,
+                            time=exec_time,
+                            dataset_p=dataset_p,
+                            dataset_s=None,
+                        )
                     )
-                )
 
-        for curr_dtype in tqdm(join, ncols=80, desc="Join"):
-            for _ in tqdm(range(samples), ncols=80, desc=f"{curr_dtype}"):
-                exec_time = curr_instance.join(curr_dtype)
-                collector.save(
-                    EvalData(
-                        library=curr_lib,
-                        operation="join",
-                        col_dtype=curr_dtype,
-                        time=exec_time,
-                        dataset_p=dataset_p,
-                        dataset_s=dataset_s,
+            for curr_dtype in tqdm(join, ncols=80, desc="Join"):
+                for _ in tqdm(range(samples), ncols=80, desc=f"{curr_dtype}"):
+                    exec_time = curr_instance.join(curr_dtype)
+                    collector.save(
+                        EvalData(
+                            library=curr_lib,
+                            operation="join",
+                            col_dtype=curr_dtype,
+                            time=exec_time,
+                            dataset_p=dataset_p,
+                            dataset_s=dataset_s,
+                        )
                     )
-                )
 
-        for curr_dtype in tqdm(aggregate, ncols=80, desc="Aggregate"):
-            for _ in tqdm(range(samples), ncols=80, desc=f"{curr_dtype}", leave=False):
-                exec_time = curr_instance.aggregate(curr_dtype)
-                collector.save(
-                    EvalData(
-                        library=curr_lib,
-                        operation="aggregate",
-                        col_dtype=curr_dtype,
-                        time=exec_time,
-                        dataset_p=dataset_p,
-                        dataset_s=None,
+            for curr_dtype in tqdm(aggregate, ncols=80, desc="Aggregate"):
+                for _ in tqdm(range(samples), ncols=80, desc=f"{curr_dtype}", leave=False):
+                    exec_time = curr_instance.aggregate(curr_dtype)
+                    collector.save(
+                        EvalData(
+                            library=curr_lib,
+                            operation="aggregate",
+                            col_dtype=curr_dtype,
+                            time=exec_time,
+                            dataset_p=dataset_p,
+                            dataset_s=None,
+                        )
                     )
-                )
 
 
 def main():
