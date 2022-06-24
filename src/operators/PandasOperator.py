@@ -17,6 +17,12 @@ class PandasOperator(BaseOperator):
     def groupby(self, dtype: str):
         df0 = self._loader(self.paths[0])
 
+        st = time()
+        df0.groupby(f"group_{dtype}").agg({"index_int": "count"})
+        en = time()
+
+        return en - st
+
     def join(self, dtype: str):
         df0 = self._loader(self.paths[0])
         df1 = self._loader(self.paths[1])
