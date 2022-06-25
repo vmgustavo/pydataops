@@ -142,7 +142,7 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
     from src.operators import BaseOperator
     from src import DataPath, EvalData, Collector
 
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger("eval-library")
     collector = Collector()
 
     mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
@@ -211,6 +211,51 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
                             dataset_s=None,
                         )
                     )
+
+
+@cli.command()
+@click.option(
+    "--outpath",
+    required=True,
+    type=str,
+    help="Path of the output file that contains all of the executions",
+)
+@click.pass_context
+def union_results(ctx, outpath):
+    import re
+    import json
+    from glob import glob
+    from pathlib import Path
+
+    import pandas as pd
+    from tqdm import tqdm
+
+    logger = logging.getLogger("union-results")
+
+    inpath = Path(ctx.obj["directory"]) / "execs"
+    outpath = Path(outpath)
+
+    files = glob(str(inpath / "*.json"))
+
+    logger.info(f"Found {len(files)} JSON files in {str(inpath)}")
+
+    jsons = list()
+    for file in tqdm(files, ncols=80, desc="Load JSONs"):
+        with open(file, "r") as f:
+            jsons.append(pd.DataFrame([json.load(f)]))
+
+    df = pd.concat(jsons)
+
+    pattern = re.compile(pattern=r"rows_(\d+)__groups_num_(\d+)__groups_arg_(\d+\w)")
+
+    primary = df["dataset_p"].str.extract(pattern)
+    df[["primary.rows", "primary.groups_num", "primary.groups_arg"]] = primary
+    secondary = df["dataset_s"].str.extract(pattern)
+    df[["secondary.rows", "secondary.groups_num", "secondary.groups_arg"]] = secondary
+
+    df = df.drop("dataset_p", "dataset_s")
+
+    df.to_csv(outpath)
 
 
 def main():
