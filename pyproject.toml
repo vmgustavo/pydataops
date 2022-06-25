@@ -20,12 +20,14 @@ pyspark = "^3.3.0"
 modin = "^0.15.2"
 ray = "^1.13"
 dask = {version = "^2022.6.1", extras = ["complete"]}
+vaex = "^4.9.2"
 
 [tool.poetry.extras]
 pandas = ["pandas"]
 pyspark = ["pyspark"]
 modin-ray = ["modin", "ray"]
 modin-dask = ["modin", "dask"]
+vaex = ["vaex"]
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.19.0"
