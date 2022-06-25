@@ -1,2 +1,13 @@
 DTYPES = ["str", "int", "float", "bool"]
-LIBRARIES = ["pandas", "modin", "vaex", "pyarrow", "pyspark", "polars", "koalas", "turicreate"]
+LIBRARIES = [
+    "pandas",
+    "pyspark",
+    "modinray",
+    "modindask",
+    "vaex",
+    "pyarrow",
+    "polars",
+    "koalas",
+    "turicreate",
+    "datatable",
+]
