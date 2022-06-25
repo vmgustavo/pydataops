@@ -166,9 +166,7 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
             dataset_s = str(datapath.secondary())
             assert datapath.primary().exists()
 
-            curr_instance = mapper[f"{curr_lib}operator"](
-                paths=(datapath.primary(), datapath.secondary())
-            )
+            curr_instance = mapper[f"{curr_lib}operator"](paths=(dataset_p, dataset_s))
 
             for curr_dtype in tqdm(groupby, ncols=80, desc="GroupBy"):
                 for _ in tqdm(range(samples), desc=f"{curr_dtype}"):
