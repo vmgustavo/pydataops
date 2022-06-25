@@ -4,3 +4,4 @@ from .PandasOperator import PandasOperator
 from .PySparkOperator import PySparkOperator
 from .ModinRayOperator import ModinRayOperator
 from .ModinDaskOperator import ModinDaskOperator
+from .PolarsOperator import PolarsOperator

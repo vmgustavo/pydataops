@@ -21,6 +21,7 @@ modin = {version = "^0.15.2", optional = true}
 ray = {version = "^1.13", optional = true}
 dask = {version = "^2022.6.1", extras = ["complete"], optional = true}
 vaex = {version = "^4.9.2", optional = true}
+polars = {version = "^0.13.50", optional = true}
 
 [tool.poetry.extras]
 pandas = ["pandas"]
@@ -28,6 +29,7 @@ pyspark = ["pyspark"]
 modin-ray = ["modin", "ray"]
 modin-dask = ["modin", "dask"]
 vaex = ["vaex"]
+polars = ["polars"]
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.19.0"
