@@ -2,7 +2,7 @@
 name = "pydataops"
 version = "0.1.0"
 description = "Test multiple Python data processing libraries"
-authors = ["Gustavo Maia <>"]
+authors = []
 packages = [
     { include = "src" }
 ]
