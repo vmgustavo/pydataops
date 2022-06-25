@@ -256,6 +256,40 @@ def union_results(ctx, outpath):
     df.to_csv(outpath)
 
 
+@cli.command()
+@click.option(
+    "--samples",
+    required=True,
+    type=int,
+    help="Number of samples to generate",
+)
+@click.pass_context
+def run_all(ctx, samples):
+    from glob import glob
+
+    from src import DataPath
+    from src.availability import LIBRARIES
+
+    data_files = glob(ctx.obj["directory"] + "/primary__*.csv")
+    rows = list()
+    groups = list()
+    for file in data_files:
+        data_path = DataPath.from_str(file)
+        rows.append(data_path.rows)
+        groups.append(data_path.groups_arg)
+
+    ctx.invoke(
+        eval_library,
+        library=LIBRARIES,
+        groupby=["str", "int", "float"],
+        join=["str", "int", "float"],
+        aggregate=["int", "float"],
+        rows=rows,
+        groups=groups,
+        samples=samples,
+    )
+
+
 def main():
     cli(obj={})
 

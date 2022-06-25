@@ -5,9 +5,5 @@ LIBRARIES = [
     "modinray",
     "modindask",
     "vaex",
-    "pyarrow",
     "polars",
-    "koalas",
-    "turicreate",
-    "datatable",
 ]

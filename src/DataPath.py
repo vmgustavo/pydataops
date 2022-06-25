@@ -32,3 +32,21 @@ class DataPath:
             return f"{groups:.0f}n"
         else:
             return f"{groups * 100:.0f}p"
+
+    @classmethod
+    def from_str(cls, s: str):
+        import re
+
+        pattern = re.compile(pattern=r"rows_(\d+)__groups_num_(\d+)__groups_arg_(\d+)(\w)")
+
+        cls.directory = s.split("/")[0]
+        cls.rows, cls.groups_num, cls.groups_arg, arg = re.search(pattern, s).groups()
+        cls.rows = int(cls.rows)
+        cls.groups_num = int(cls.groups_num)
+
+        if arg == "p":
+            cls.groups_arg = int(cls.groups_arg) / 100
+        elif arg == "n":
+            cls.groups_arg = int(cls.groups_arg)
+
+        return cls
