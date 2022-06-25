@@ -168,7 +168,7 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
 
             curr_instance = mapper[f"{curr_lib}operator"](paths=(dataset_p, dataset_s))
 
-            for curr_dtype in tqdm(groupby, ncols=80, desc="GroupBy"):
+            for curr_dtype in tqdm(groupby, desc="GroupBy"):
                 for _ in tqdm(range(samples), desc=f"{curr_dtype}"):
                     exec_time = curr_instance.groupby(curr_dtype)
                     collector.save(
@@ -182,8 +182,8 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
                         )
                     )
 
-            for curr_dtype in tqdm(join, ncols=80, desc="Join"):
-                for _ in tqdm(range(samples), ncols=80, desc=f"{curr_dtype}"):
+            for curr_dtype in tqdm(join, desc="Join"):
+                for _ in tqdm(range(samples), desc=f"{curr_dtype}"):
                     exec_time = curr_instance.join(curr_dtype)
                     collector.save(
                         EvalData(
@@ -196,8 +196,8 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
                         )
                     )
 
-            for curr_dtype in tqdm(aggregate, ncols=80, desc="Aggregate"):
-                for _ in tqdm(range(samples), ncols=80, desc=f"{curr_dtype}", leave=False):
+            for curr_dtype in tqdm(aggregate, desc="Aggregate"):
+                for _ in tqdm(range(samples), desc=f"{curr_dtype}", leave=False):
                     exec_time = curr_instance.aggregate(curr_dtype)
                     collector.save(
                         EvalData(
@@ -238,7 +238,7 @@ def union_results(ctx, outpath):
     logger.info(f"Found {len(files)} JSON files in {str(inpath)}")
 
     jsons = list()
-    for file in tqdm(files, ncols=80, desc="Load JSONs"):
+    for file in tqdm(files, desc="Load JSONs"):
         with open(file, "r") as f:
             jsons.append(pd.DataFrame([json.load(f)]))
 
