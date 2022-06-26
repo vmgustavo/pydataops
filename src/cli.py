@@ -170,7 +170,14 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
 
             for curr_dtype in tqdm(groupby, desc="GroupBy"):
                 for _ in tqdm(range(samples), desc=f"{curr_dtype}"):
-                    exec_time = curr_instance.groupby(curr_dtype)
+
+                    try:
+                        exec_time = curr_instance.groupby(curr_dtype)
+                        exception = None
+                    except Exception as e:
+                        exec_time = -1.0
+                        exception = e.__class__.__name__
+
                     collector.save(
                         EvalData(
                             library=curr_lib,
@@ -179,12 +186,20 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
                             time=exec_time,
                             dataset_p=dataset_p,
                             dataset_s=None,
+                            exception=exception,
                         )
                     )
 
             for curr_dtype in tqdm(join, desc="Join"):
                 for _ in tqdm(range(samples), desc=f"{curr_dtype}"):
-                    exec_time = curr_instance.join(curr_dtype)
+
+                    try:
+                        exec_time = curr_instance.join(curr_dtype)
+                        exception = None
+                    except Exception as e:
+                        exec_time = -1.0
+                        exception = e.__class__.__name__
+
                     collector.save(
                         EvalData(
                             library=curr_lib,
@@ -193,12 +208,20 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
                             time=exec_time,
                             dataset_p=dataset_p,
                             dataset_s=dataset_s,
+                            exception=exception,
                         )
                     )
 
             for curr_dtype in tqdm(aggregate, desc="Aggregate"):
                 for _ in tqdm(range(samples), desc=f"{curr_dtype}", leave=False):
-                    exec_time = curr_instance.aggregate(curr_dtype)
+
+                    try:
+                        exec_time = curr_instance.aggregate(curr_dtype)
+                        exception = None
+                    except Exception as e:
+                        exec_time = -1.0
+                        exception = e.__class__.__name__
+
                     collector.save(
                         EvalData(
                             library=curr_lib,
@@ -207,6 +230,7 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
                             time=exec_time,
                             dataset_p=dataset_p,
                             dataset_s=None,
+                            exception=exception,
                         )
                     )
 

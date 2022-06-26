@@ -13,6 +13,7 @@ class EvalData:
     dataset_p: str
     dataset_s: Optional[str]
     time: float
+    exception: Optional[str]
 
 
 class Collector:
