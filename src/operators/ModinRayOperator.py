@@ -14,7 +14,8 @@ class ModinRayOperator(BaseOperator):
     def __init__(self, paths: Tuple[str, str]):
         BaseOperator.__init__(self, paths=paths)
         os.environ["MODIN_ENGINE"] = "ray"  # Modin will use Ray
-        ray.init(_temp_dir=f"{Path().home()}/.tmp-Ray")
+        self.tmp_dir = f"{Path().home()}/.tmp-Ray"
+        ray.init(_temp_dir=self.tmp_dir)
 
     @staticmethod
     def _loader(path: str):
@@ -49,4 +50,7 @@ class ModinRayOperator(BaseOperator):
         return en - st
 
     def __del__(self):
-        shutil.rmtree(f"{Path().home()}/.tmp-Ray")
+        try:
+            shutil.rmtree(self.tmp_dir)
+        except FileNotFoundError:
+            pass

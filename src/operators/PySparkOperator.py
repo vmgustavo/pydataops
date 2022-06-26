@@ -13,10 +13,11 @@ from .BaseOperator import BaseOperator
 class PySparkOperator(BaseOperator):
     def __init__(self, paths: Tuple[str, str]):
         BaseOperator.__init__(self, paths=paths)
+        self.tmp_dir = f"{Path().home()}/.tmp-PySpark"
 
     def _loader(self, path: str):
         conf = SparkConf()
-        conf.set(*("spark.local.dir", f"{Path().home()}/.tmp-PySpark"))
+        conf.set(*("spark.local.dir", self.tmp_dir))
         spark = SparkSession.builder.config(conf=conf).getOrCreate()
         return spark.read.csv(path, header=True)
 
@@ -49,4 +50,7 @@ class PySparkOperator(BaseOperator):
         return en - st
 
     def __del__(self):
-        shutil.rmtree(f"{Path().home()}/.tmp-PySpark")
+        try:
+            shutil.rmtree(self.tmp_dir)
+        except FileNotFoundError:
+            pass
