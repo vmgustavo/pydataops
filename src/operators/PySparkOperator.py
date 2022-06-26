@@ -1,4 +1,5 @@
 import shutil
+import logging
 from time import time
 from pathlib import Path
 from typing import Tuple
@@ -15,10 +16,15 @@ class PySparkOperator(BaseOperator):
         BaseOperator.__init__(self, paths=paths)
         self.tmp_dir = f"{Path().home()}/.tmp-PySpark"
 
+        logging.getLogger("spark").setLevel(logging.ERROR)
+        logging.getLogger("py4j").setLevel(logging.ERROR)
+
     def _loader(self, path: str):
         conf = SparkConf()
-        conf.set(*("spark.local.dir", self.tmp_dir))
+        conf.set("spark.local.dir", self.tmp_dir)
+
         spark = SparkSession.builder.config(conf=conf).getOrCreate()
+        spark.sparkContext.setLogLevel("ERROR")
         return spark.read.csv(path, header=True)
 
     def groupby(self, dtype: str):
