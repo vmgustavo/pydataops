@@ -275,7 +275,7 @@ def union_results(ctx, outpath):
     secondary = df["dataset_s"].str.extract(pattern)
     df[["secondary.rows", "secondary.groups_num", "secondary.groups_arg"]] = secondary
 
-    df = df.drop("dataset_p", "dataset_s")
+    df = df.drop(columns=["dataset_p", "dataset_s"])
 
     df.to_csv(outpath)
 
