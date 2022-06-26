@@ -15,6 +15,7 @@ class ModinRayOperator(BaseOperator):
         BaseOperator.__init__(self, paths=paths)
         os.environ["MODIN_ENGINE"] = "ray"  # Modin will use Ray
         self.tmp_dir = f"{Path().home()}/.tmp-Ray"
+        ray.shutdown()
         ray.init(_temp_dir=self.tmp_dir)
 
     @staticmethod
