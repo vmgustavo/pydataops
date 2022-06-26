@@ -1,7 +1,10 @@
 import os
+import shutil
 from time import time
+from pathlib import Path
 from typing import Tuple
 
+import ray
 import modin.pandas as pd
 
 from .BaseOperator import BaseOperator
@@ -11,6 +14,7 @@ class ModinRayOperator(BaseOperator):
     def __init__(self, paths: Tuple[str, str]):
         BaseOperator.__init__(self, paths=paths)
         os.environ["MODIN_ENGINE"] = "ray"  # Modin will use Ray
+        ray.init(_temp_dir=f"{Path().home()}/.tmp-Ray")
 
     @staticmethod
     def _loader(path: str):
@@ -43,3 +47,6 @@ class ModinRayOperator(BaseOperator):
         en = time()
 
         return en - st
+
+    def __del__(self):
+        shutil.rmtree(f"{Path().home()}/.tmp-Ray")
