@@ -24,6 +24,7 @@ vaex = {version = "^4.9.2", optional = true}
 polars = {version = "^0.13.50", optional = true}
 
 [tool.poetry.extras]
+all = ["pandas", "pyspark", "modin", "ray", "dask", "vaex", "polars"]
 pandas = ["pandas"]
 pyspark = ["pyspark"]
 modin-ray = ["modin", "ray"]
