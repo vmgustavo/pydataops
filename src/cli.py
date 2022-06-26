@@ -145,6 +145,8 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
     logger = logging.getLogger("eval-library")
     collector = Collector()
 
+    # TODO: better progress monitoring to indicate how many more executions are
+    #  left considering all of the algorithms that are yet to run
     mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
     for groups_arg in map(float, groups):
         if groups_arg.is_integer():
@@ -167,6 +169,7 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
             assert datapath.primary().exists()
 
             curr_instance = mapper[f"{curr_lib}operator"](paths=(dataset_p, dataset_s))
+            # TODO: add descriptive logging statements
 
             for curr_dtype in tqdm(groupby, desc="GroupBy"):
                 for _ in tqdm(range(samples), desc=f"{curr_dtype}"):
