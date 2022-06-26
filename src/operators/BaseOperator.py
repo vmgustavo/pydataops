@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 class BaseOperator(ABC):
     def __init__(self, paths: Tuple[str, str]):
         self.paths = paths
+        self.last_result = None
 
     @staticmethod
     @abstractmethod
@@ -21,4 +22,8 @@ class BaseOperator(ABC):
 
     @abstractmethod
     def aggregate(self, dtype: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def last_result_aslist(self):
         raise NotImplementedError
