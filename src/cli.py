@@ -277,7 +277,7 @@ def union_results(ctx, outpath):
 
     df = df.drop(columns=["dataset_p", "dataset_s"])
 
-    df.to_csv(outpath)
+    df.to_csv(outpath, index=False)
 
 
 @cli.command()
