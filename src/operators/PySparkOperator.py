@@ -1,6 +1,9 @@
+import shutil
 from time import time
+from pathlib import Path
 from typing import Tuple
 
+from pyspark import SparkConf
 import pyspark.sql.functions as f
 from pyspark.sql import SparkSession
 
@@ -12,7 +15,9 @@ class PySparkOperator(BaseOperator):
         BaseOperator.__init__(self, paths=paths)
 
     def _loader(self, path: str):
-        spark = SparkSession.builder.getOrCreate()
+        conf = SparkConf()
+        conf.set(*("spark.local.dir", f"{Path().home()}/.tmp-PySpark"))
+        spark = SparkSession.builder.config(conf=conf).getOrCreate()
         return spark.read.csv(path, header=True)
 
     def groupby(self, dtype: str):
@@ -42,3 +47,6 @@ class PySparkOperator(BaseOperator):
         en = time()
 
         return en - st
+
+    def __del__(self):
+        shutil.rmtree(f"{Path().home()}/.tmp-PySpark")
