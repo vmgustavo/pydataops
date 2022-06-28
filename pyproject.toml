@@ -22,12 +22,13 @@ ray = {version = "<1.13.0", optional = true}
 dask = {version = "<2022.6.1", extras = ["complete"], optional = true}
 vaex = {version = "^4.9.2", optional = true}
 polars = {version = "^0.13.50", optional = true}
+protobuf = {version = "<3.20", optional = true}
 
 [tool.poetry.extras]
 all = ["pandas", "pyspark", "modin", "ray", "dask", "vaex", "polars"]
 pandas = ["pandas"]
 pyspark = ["pyspark"]
-modin-ray = ["modin", "ray"]
+modin-ray = ["modin", "ray", "protobuf"]
 modin-dask = ["modin", "dask"]
 vaex = ["vaex"]
 polars = ["polars"]
