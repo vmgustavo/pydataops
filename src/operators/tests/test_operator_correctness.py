@@ -1,4 +1,5 @@
 import csv
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -30,15 +31,36 @@ def setup_environment():
 
 @pytest.mark.parametrize("operator", BaseOperator.__subclasses__())
 def test_operators(setup_environment, operator):  # noqa
+    tempdir = tempfile.TemporaryDirectory()
+    filepath = str(Path(tempdir.name) / "res.csv")
+
     op = operator(paths=(str(setup_environment["primary"]), str(setup_environment["secondary"])))
 
+    ############################################################################
+
     _, res = op.groupby("int")
-    assert op.res_as_list(res) == setup_environment["groupby"]
+    op.res_to_csv(res, filepath)
+
+    with open(filepath, newline="") as f:
+        res_from_csv = list(csv.reader(f, delimiter=","))
+    assert res_from_csv[1:] == setup_environment["groupby"]
+
+    ############################################################################
 
     _, res = op.join("int")
-    assert op.res_as_list(res)[0] == setup_environment["join"][0]
+    op.res_to_csv(res, filepath)
+
+    with open(filepath, newline="") as f:
+        res_from_csv = list(csv.reader(f, delimiter=","))
+    # TODO: fix number of decimal places in the reference csv being different
+    #  from the number of decimal places in the current execution
+    assert res_from_csv[1:][0] == setup_environment["join"][0]
+
+    ############################################################################
 
     _, res = op.aggregate("int")
-    assert op.res_as_list(res) == setup_environment["aggregate"]
+    op.res_to_csv(res, filepath)
 
-    assert True
+    with open(filepath, newline="") as f:
+        res_from_csv = list(csv.reader(f, delimiter=","))
+    assert res_from_csv[1:] == setup_environment["aggregate"]

@@ -18,8 +18,7 @@ class ModinRayOperator(BaseOperator):
         ray.shutdown()
         ray.init(_temp_dir=self.tmp_dir)
 
-    @staticmethod
-    def _loader(path: str):
+    def _loader(self, path: str):
         return pd.read_csv(path)
 
     def groupby(self, dtype: str):
@@ -55,3 +54,6 @@ class ModinRayOperator(BaseOperator):
             shutil.rmtree(self.tmp_dir)
         except FileNotFoundError:
             pass
+
+    def res_to_csv(self, res, outpath: str):
+        return res.astype("str").values.tolist()

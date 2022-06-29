@@ -3,8 +3,9 @@ from itertools import product
 
 from tqdm import tqdm
 
-from src.operators import BaseOperator
-from src import DataPath, EvalData, Collector
+from .DataPath import DataPath
+from .operators import BaseOperator
+from .Collector import EvalData, Collector
 
 
 def execute_eval(directory, library, groupby, join, aggregate, rows, groups, samples):

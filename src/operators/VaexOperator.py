@@ -45,3 +45,9 @@ class VaexOperator(BaseOperator):
         en = time()
 
         return en - st, res
+
+    def res_to_csv(self, res, outpath: str):
+        res = res.sort(by=list(res.columns)[0], ascending=True)
+        for col in res.columns:
+            res[col] = res[col].astype("str")
+        res.export_csv(outpath)

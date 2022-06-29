@@ -12,8 +12,7 @@ class ModinDaskOperator(BaseOperator):
         BaseOperator.__init__(self, paths=paths)
         os.environ["MODIN_ENGINE"] = "dask"  # Modin will use Dask
 
-    @staticmethod
-    def _loader(path: str):
+    def _loader(self, path: str):
         return pd.read_csv(path)
 
     def groupby(self, dtype: str):
@@ -43,3 +42,6 @@ class ModinDaskOperator(BaseOperator):
         en = time()
 
         return en - st, res
+
+    def res_to_csv(self, res, outpath: str):
+        return res.astype("str").values.tolist()

@@ -24,5 +24,5 @@ class BaseOperator(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def res_as_list(self, res):
+    def res_to_csv(self, res, outpath: str):
         raise NotImplementedError
