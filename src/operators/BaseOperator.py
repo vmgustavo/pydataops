@@ -7,9 +7,8 @@ class BaseOperator(ABC):
         self.paths = paths
         self.last_result = None
 
-    @staticmethod
     @abstractmethod
-    def _loader(path: str):
+    def _loader(self, path: str):
         raise NotImplementedError
 
     @abstractmethod
@@ -25,5 +24,5 @@ class BaseOperator(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def last_result_aslist(self):
+    def res_as_list(self, res):
         raise NotImplementedError

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from .. import BaseOperator, PandasOperator
+from .. import BaseOperator
 
 
 @pytest.yield_fixture(scope="session")
@@ -22,24 +22,23 @@ def setup_environment():
     yield {
         "primary": str(root / "primary.csv"),
         "secondary": str(root / "secondary.csv"),
-        "join": ref_join,
-        "groupby": ref_groupby,
-        "aggregate": ref_aggregate,
+        "join": ref_join[1:],
+        "groupby": ref_groupby[1:],
+        "aggregate": ref_aggregate[1:],
     }
 
 
-# BaseOperator.__subclasses__()
-@pytest.mark.parametrize("operator", [PandasOperator])
-def test_operators(setup_environment, operator):
+@pytest.mark.parametrize("operator", BaseOperator.__subclasses__())
+def test_operators(setup_environment, operator):  # noqa
     op = operator(paths=(str(setup_environment["primary"]), str(setup_environment["secondary"])))
 
-    op.groupby("int")
-    assert op.last_result_aslist() == setup_environment["groupby"]
+    _, res = op.groupby("int")
+    assert op.res_as_list(res) == setup_environment["groupby"]
 
-    op.join("int")
-    assert op.last_result_aslist() == setup_environment["join"]
+    _, res = op.join("int")
+    assert op.res_as_list(res)[0] == setup_environment["join"][0]
 
-    op.aggregate("int")
-    assert op.last_result_aslist() == setup_environment["aggregate"]
+    _, res = op.aggregate("int")
+    assert op.res_as_list(res) == setup_environment["aggregate"]
 
     assert True

@@ -20,26 +20,26 @@ class ModinDaskOperator(BaseOperator):
         df0 = self._loader(self.paths[0])
 
         st = time()
-        df0.groupby(f"group_{dtype}").agg({"index_int": "count"})
+        res = df0.groupby(f"group_{dtype}").agg({"index_int": "count"})
         en = time()
 
-        return en - st
+        return en - st, res
 
     def join(self, dtype: str):
         df0 = self._loader(self.paths[0])
         df1 = self._loader(self.paths[1])
 
         st = time()
-        df0.merge(df1, on=f"index_{dtype}", how="inner")
+        res = df0.merge(df1, on=f"index_{dtype}", how="inner")
         en = time()
 
-        return en - st
+        return en - st, res
 
     def aggregate(self, dtype: str):
         df0 = self._loader(self.paths[0])
 
         st = time()
-        df0[f"value_{dtype}_0"].aggregate("sum")
+        res = df0[f"value_{dtype}_0"].aggregate("sum")
         en = time()
 
-        return en - st
+        return en - st, res

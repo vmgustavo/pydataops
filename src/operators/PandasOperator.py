@@ -10,40 +10,37 @@ class PandasOperator(BaseOperator):
     def __init__(self, paths: Tuple[str, str]):
         BaseOperator.__init__(self, paths=paths)
 
-    @staticmethod
-    def _loader(path: str):
+    def _loader(self, path: str):
         return pd.read_csv(path)
 
     def groupby(self, dtype: str):
         df0 = self._loader(self.paths[0])
-        self.last_result = None
 
         st = time()
-        self.last_result = df0.groupby(f"group_{dtype}").agg({"index_int": "count"})
+        res = df0.groupby(f"group_{dtype}", as_index=False).agg({"index_int": "count"})
         en = time()
 
-        return en - st
+        return en - st, res
 
     def join(self, dtype: str):
         df0 = self._loader(self.paths[0])
         df1 = self._loader(self.paths[1])
-        self.last_result = None
 
         st = time()
-        self.last_result = df0.merge(df1, on=f"index_{dtype}", how="inner")
+        res = df0.merge(df1, on=f"index_{dtype}", how="inner")
         en = time()
 
-        return en - st
+        return en - st, res
 
     def aggregate(self, dtype: str):
         df0 = self._loader(self.paths[0])
-        self.last_result = None
 
         st = time()
-        self.last_result = df0[f"value_{dtype}_0"].aggregate("sum")
+        res = df0[f"value_{dtype}_0"].aggregate("sum")
         en = time()
 
-        return en - st
+        res = pd.DataFrame([res])
+        return en - st, res
 
-    def last_result_aslist(self):
-        pass
+    def res_as_list(self, res):
+        return res.astype("str").values.tolist()

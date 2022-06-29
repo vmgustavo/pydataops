@@ -36,8 +36,8 @@ def setup_environment():
 def test_operators(setup_environment, operator):
     op = operator(paths=(str(setup_environment["primary"]), str(setup_environment["secondary"])))
 
-    op.groupby("int")
-    op.join("int")
-    op.aggregate("int")
+    _, _ = op.groupby("int")
+    _, _ = op.join("int")
+    _, _ = op.aggregate("int")
 
     assert True
