@@ -148,13 +148,13 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
     # TODO: better progress monitoring to indicate how many more executions are
     #  left considering all of the algorithms that are yet to run
     mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
-    for groups_arg in map(float, groups):
+    for groups_arg in tqdm(map(float, groups)):
         if groups_arg.is_integer():
             groups_num = [int(groups_arg)] * len(rows)
         else:
             groups_num = [int(groups_arg * row) for row in rows]
 
-        for curr_lib, (curr_rows, curr_groups) in product(library, zip(rows, groups_num)):
+        for curr_lib, (curr_rows, curr_groups) in tqdm(product(library, zip(rows, groups_num))):
             datapath = DataPath(ctx.obj["directory"], curr_rows, curr_groups, groups_arg)
 
             if (not datapath.primary().exists()) or (not datapath.secondary().exists()):
@@ -193,8 +193,8 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
                         )
                     )
 
-            for curr_dtype in tqdm(join, desc="Join"):
-                for _ in tqdm(range(samples), desc=f"{curr_dtype}"):
+            for curr_dtype in join:
+                for _ in range(samples):
 
                     try:
                         exec_time = curr_instance.join(curr_dtype)
@@ -215,8 +215,8 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
                         )
                     )
 
-            for curr_dtype in tqdm(aggregate, desc="Aggregate"):
-                for _ in tqdm(range(samples), desc=f"{curr_dtype}", leave=False):
+            for curr_dtype in aggregate:
+                for _ in range(samples):
 
                     try:
                         exec_time = curr_instance.aggregate(curr_dtype)
@@ -302,10 +302,13 @@ def union_results(ctx, inpath, outpath):
 )
 @click.pass_context
 def run_all(ctx, samples):
+    import logging
     from glob import glob
 
     from src import DataPath
     from src.availability import LIBRARIES
+
+    logger = logging.getLogger("run-all")
 
     data_files = glob(ctx.obj["directory"] + "/primary__*.csv")
     rows = list()
@@ -314,6 +317,9 @@ def run_all(ctx, samples):
         data_path = DataPath.from_str(file)
         rows.append(data_path.rows)
         groups.append(data_path.groups_arg)
+
+    count = len(LIBRARIES) * 3 * 3 * 2 * len(rows) * samples
+    logger.info(f"Number of cases to execute: {count:d}")
 
     ctx.invoke(
         eval_library,
