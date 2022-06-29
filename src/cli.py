@@ -240,13 +240,19 @@ def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
 
 @cli.command()
 @click.option(
+    "--inpath",
+    required=False,
+    type=str,
+    help="Path of the input directory with the data of the executions",
+)
+@click.option(
     "--outpath",
     required=True,
     type=str,
     help="Path of the output file that contains all of the executions",
 )
 @click.pass_context
-def union_results(ctx, outpath):
+def union_results(ctx, inpath, outpath):
     import re
     import json
     from glob import glob
@@ -257,7 +263,11 @@ def union_results(ctx, outpath):
 
     logger = logging.getLogger("union-results")
 
-    inpath = Path(ctx.obj["directory"]) / "execs"
+    if inpath is None:
+        inpath = Path(ctx.obj["directory"]) / "execs"
+    else:
+        inpath = Path(inpath)
+
     outpath = Path(outpath)
 
     files = glob(str(inpath / "*.json"))
