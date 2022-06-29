@@ -135,107 +135,9 @@ def create_data(ctx, rows, groups, overwrite):
 )
 @click.pass_context
 def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
-    from itertools import product
+    from src import execute_eval
 
-    from tqdm import tqdm
-
-    from src.operators import BaseOperator
-    from src import DataPath, EvalData, Collector
-
-    logger = logging.getLogger("eval-library")
-    collector = Collector()
-
-    # TODO: better progress monitoring to indicate how many more executions are
-    #  left considering all of the algorithms that are yet to run
-    mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
-    for groups_arg in tqdm(map(float, groups)):
-        if groups_arg.is_integer():
-            groups_num = [int(groups_arg)] * len(rows)
-        else:
-            groups_num = [int(groups_arg * row) for row in rows]
-
-        for curr_lib, (curr_rows, curr_groups) in tqdm(product(library, zip(rows, groups_num))):
-            datapath = DataPath(ctx.obj["directory"], curr_rows, curr_groups, groups_arg)
-
-            if (not datapath.primary().exists()) or (not datapath.secondary().exists()):
-                logger.warning(
-                    f"The combination of library '{curr_lib}', rows '{curr_rows}' and groups '{curr_groups}'"
-                    + " has no available dataset. The current processing step will be skipped."
-                )
-                continue
-
-            dataset_p = str(datapath.primary())
-            dataset_s = str(datapath.secondary())
-            assert datapath.primary().exists()
-
-            curr_instance = mapper[f"{curr_lib}operator"](paths=(dataset_p, dataset_s))
-            # TODO: add descriptive logging statements
-
-            for curr_dtype in tqdm(groupby, desc="GroupBy"):
-                for _ in tqdm(range(samples), desc=f"{curr_dtype}"):
-
-                    try:
-                        exec_time = curr_instance.groupby(curr_dtype)
-                        exception = None
-                    except Exception as e:
-                        exec_time = -1.0
-                        exception = e.__class__.__name__
-
-                    collector.save(
-                        EvalData(
-                            library=curr_lib,
-                            operation="groupby",
-                            col_dtype=curr_dtype,
-                            time=exec_time,
-                            dataset_p=dataset_p,
-                            dataset_s=None,
-                            exception=exception,
-                        )
-                    )
-
-            for curr_dtype in join:
-                for _ in range(samples):
-
-                    try:
-                        exec_time = curr_instance.join(curr_dtype)
-                        exception = None
-                    except Exception as e:
-                        exec_time = -1.0
-                        exception = e.__class__.__name__
-
-                    collector.save(
-                        EvalData(
-                            library=curr_lib,
-                            operation="join",
-                            col_dtype=curr_dtype,
-                            time=exec_time,
-                            dataset_p=dataset_p,
-                            dataset_s=dataset_s,
-                            exception=exception,
-                        )
-                    )
-
-            for curr_dtype in aggregate:
-                for _ in range(samples):
-
-                    try:
-                        exec_time = curr_instance.aggregate(curr_dtype)
-                        exception = None
-                    except Exception as e:
-                        exec_time = -1.0
-                        exception = e.__class__.__name__
-
-                    collector.save(
-                        EvalData(
-                            library=curr_lib,
-                            operation="aggregate",
-                            col_dtype=curr_dtype,
-                            time=exec_time,
-                            dataset_p=dataset_p,
-                            dataset_s=None,
-                            exception=exception,
-                        )
-                    )
+    execute_eval(ctx.obj["directory"], library, groupby, join, aggregate, rows, groups, samples)
 
 
 @cli.command()
@@ -302,7 +204,6 @@ def union_results(ctx, inpath, outpath):
 )
 @click.pass_context
 def run_all(ctx, samples):
-    import logging
     from glob import glob
 
     from src import DataPath
@@ -318,7 +219,7 @@ def run_all(ctx, samples):
         rows.append(data_path.rows)
         groups.append(data_path.groups_arg)
 
-    count = len(LIBRARIES) * 3 * 3 * 2 * len(rows) * samples
+    count = len(LIBRARIES) * len(rows) * len(groups) * samples * (3 + 3 + 2)
     logger.info(f"Number of cases to execute: {count:d}")
 
     ctx.invoke(
