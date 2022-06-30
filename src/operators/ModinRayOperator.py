@@ -51,6 +51,7 @@ class ModinRayOperator(BaseOperator):
 
     def __del__(self):
         try:
-            shutil.rmtree(self.tmp_dir)
+            for elem in Path(self.tmp_dir).glob("*"):
+                shutil.rmtree(elem)
         except FileNotFoundError:
             pass
