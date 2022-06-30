@@ -12,11 +12,17 @@ def execute_eval(directory, library, groupby, join, aggregate, rows, groups, sam
     logger = logging.getLogger("eval-library")
     collector = Collector()
 
-    # TODO: better progress monitoring to indicate how many more executions are
-    #  left considering all of the algorithms that are yet to run
     mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
 
+    logger.info(
+        f"{len(library)} libraries"
+        + f" | {len(rows)} rows sets"
+        + f" | {len(groups)} groups specs"
+        + f" | {samples} samples"
+        + " | 8 columns dtypes"
+    )
     count = len(library) * len(rows) * len(groups) * samples * (3 + 3 + 2)
+    logger.info(f"Total number of evaluations: {count}")
 
     pbar = tqdm(total=count)
     for groups_arg in map(float, groups):
@@ -44,6 +50,13 @@ def execute_eval(directory, library, groupby, join, aggregate, rows, groups, sam
 
             for curr_dtype in groupby:
                 for _ in range(samples):
+                    logger.debug(
+                        f"library={curr_lib}"
+                        + f' | operation={"groupby"}'
+                        + f" | col_dtype={curr_dtype}"
+                        + f" | dataset_p={dataset_p}"
+                        + f" | dataset_s={None}"
+                    )
 
                     try:
                         exec_time, _ = curr_instance.groupby(curr_dtype)
@@ -67,6 +80,13 @@ def execute_eval(directory, library, groupby, join, aggregate, rows, groups, sam
 
             for curr_dtype in join:
                 for _ in range(samples):
+                    logger.debug(
+                        f"library={curr_lib}"
+                        + f' | operation={"join"}'
+                        + f" | col_dtype={curr_dtype}"
+                        + f" | dataset_p={dataset_p}"
+                        + f" | dataset_s={None}"
+                    )
 
                     try:
                         exec_time, _ = curr_instance.join(curr_dtype)
@@ -90,6 +110,13 @@ def execute_eval(directory, library, groupby, join, aggregate, rows, groups, sam
 
             for curr_dtype in aggregate:
                 for _ in range(samples):
+                    logger.debug(
+                        f"library={curr_lib}"
+                        + f' | operation={"aggregate"}'
+                        + f" | col_dtype={curr_dtype}"
+                        + f" | dataset_p={dataset_p}"
+                        + f" | dataset_s={None}"
+                    )
 
                     try:
                         exec_time, _ = curr_instance.aggregate(curr_dtype)
