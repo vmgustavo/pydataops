@@ -1,4 +1,3 @@
-import shutil
 import logging
 from time import time
 from pathlib import Path
@@ -19,13 +18,14 @@ class PySparkOperator(BaseOperator):
         logging.getLogger("spark").setLevel(logging.ERROR)
         logging.getLogger("py4j").setLevel(logging.ERROR)
 
-    def _loader(self, path: str):
         conf = SparkConf()
         conf.set("spark.local.dir", self.tmp_dir)
 
-        spark = SparkSession.builder.config(conf=conf).getOrCreate()
-        spark.sparkContext.setLogLevel("ERROR")
-        return spark.read.csv(path, header=True)
+        self.spark = SparkSession.builder.config(conf=conf).getOrCreate()
+        self.spark.sparkContext.setLogLevel("ERROR")
+
+    def _loader(self, path: str):
+        return self.spark.read.csv(path, header=True)
 
     def groupby(self, dtype: str):
         df0 = self._loader(self.paths[0])
@@ -56,8 +56,4 @@ class PySparkOperator(BaseOperator):
         return en - st, res
 
     def __del__(self):
-        try:
-            for elem in Path(self.tmp_dir).glob("*"):
-                shutil.rmtree(elem)
-        except FileNotFoundError:
-            pass
+        self.spark.stop()
