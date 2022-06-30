@@ -33,7 +33,7 @@ def setup_environment():
 
 
 @pytest.mark.parametrize("operator", BaseOperator.__subclasses__())
-def test_operators(setup_environment, operator):
+def test_operators(setup_environment, operator):  # noqa
     op = operator(paths=(str(setup_environment["primary"]), str(setup_environment["secondary"])))
 
     _, _ = op.groupby("int")

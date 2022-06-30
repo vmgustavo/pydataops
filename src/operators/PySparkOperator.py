@@ -60,6 +60,3 @@ class PySparkOperator(BaseOperator):
             shutil.rmtree(self.tmp_dir)
         except FileNotFoundError:
             pass
-
-    def res_to_csv(self, res, outpath: str):
-        return res.astype("str").values.tolist()

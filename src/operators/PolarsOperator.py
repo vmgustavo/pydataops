@@ -40,6 +40,3 @@ class PolarsOperator(BaseOperator):
         en = time()
 
         return en - st, res
-
-    def res_to_csv(self, res, outpath: str):
-        return res.astype("str").values.tolist()

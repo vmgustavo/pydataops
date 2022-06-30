@@ -41,6 +41,3 @@ class PandasOperator(BaseOperator):
 
         res = pd.DataFrame([res])
         return en - st, res
-
-    def res_to_csv(self, res, outpath: str):
-        res.sort_values(res.columns[0]).astype("str").to_csv(outpath)

@@ -22,7 +22,3 @@ class BaseOperator(ABC):
     @abstractmethod
     def aggregate(self, dtype: str):
         raise NotImplementedError
-
-    @abstractmethod
-    def res_to_csv(self, res, outpath: str):
-        raise NotImplementedError
