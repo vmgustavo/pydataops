@@ -168,7 +168,7 @@ def union_results(ctx, inpath, outpath):
     logger = logging.getLogger("union-results")
 
     if inpath is None:
-        inpath = Path(ctx.obj["directory"]) / "execs"
+        inpath = Path(ctx.obj["directory"]) / "execs__2022-06-29"
     else:
         inpath = Path(inpath)
 
@@ -215,11 +215,11 @@ def run_all(ctx, samples):
 
     data_files = glob(ctx.obj["directory"] + "/primary__*.csv")
     rows = list()
-    groups = list()
+    groups = set()
     for file in data_files:
         data_path = DataPath.from_str(file)
         rows.append(data_path.rows)
-        groups.append(data_path.groups_arg)
+        groups.add(data_path.groups_arg)
 
     count = len(LIBRARIES) * len(rows) * len(groups) * samples * (3 + 3 + 2)
     logger.info(f"Number of cases to execute: {count:d}")

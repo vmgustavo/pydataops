@@ -46,7 +46,6 @@ def execute_eval(directory, library, groupby, join, aggregate, rows, groups, sam
             assert datapath.primary().exists()
 
             curr_instance = mapper[f"{curr_lib}operator"](paths=(dataset_p, dataset_s))
-            # TODO: add descriptive logging statements
 
             for curr_dtype in groupby:
                 for _ in range(samples):
