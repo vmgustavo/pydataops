@@ -54,6 +54,3 @@ class PySparkOperator(BaseOperator):
         en = time()
 
         return en - st, res
-
-    def __del__(self):
-        self.spark.stop()
