@@ -1,4 +1,5 @@
 import logging
+import os.path
 from itertools import product
 
 from tqdm import tqdm
@@ -10,7 +11,7 @@ from .Collector import EvalData, Collector
 
 def execute_eval(directory, library, groupby, join, aggregate, rows, groups, samples):
     logger = logging.getLogger("eval-library")
-    collector = Collector()
+    collector = Collector(dirpath=os.path.join(directory, "data", "execs"))
 
     mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
 
