@@ -18,40 +18,40 @@ class ModinRayOperator(BaseOperator):
         ray.shutdown()
         ray.init(_temp_dir=self.tmp_dir)
 
-    @staticmethod
-    def _loader(path: str):
+    def _loader(self, path: str):
         return pd.read_csv(path)
 
     def groupby(self, dtype: str):
         df0 = self._loader(self.paths[0])
 
         st = time()
-        df0.groupby(f"group_{dtype}").agg({"index_int": "count"})
+        res = df0.groupby(f"group_{dtype}").agg({"index_int": "count"})
         en = time()
 
-        return en - st
+        return en - st, res
 
     def join(self, dtype: str):
         df0 = self._loader(self.paths[0])
         df1 = self._loader(self.paths[1])
 
         st = time()
-        df0.merge(df1, on=f"index_{dtype}", how="inner")
+        res = df0.merge(df1, on=f"index_{dtype}", how="inner")
         en = time()
 
-        return en - st
+        return en - st, res
 
     def aggregate(self, dtype: str):
         df0 = self._loader(self.paths[0])
 
         st = time()
-        df0[f"value_{dtype}_0"].aggregate("sum")
+        res = df0[f"value_{dtype}_0"].aggregate("sum")
         en = time()
 
-        return en - st
+        return en - st, res
 
     def __del__(self):
         try:
-            shutil.rmtree(self.tmp_dir)
+            for elem in Path(self.tmp_dir).glob("*"):
+                shutil.rmtree(elem)
         except FileNotFoundError:
             pass

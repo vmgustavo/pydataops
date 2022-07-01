@@ -1,4 +1,3 @@
-import shutil
 import logging
 from time import time
 from pathlib import Path
@@ -19,44 +18,39 @@ class PySparkOperator(BaseOperator):
         logging.getLogger("spark").setLevel(logging.ERROR)
         logging.getLogger("py4j").setLevel(logging.ERROR)
 
-    def _loader(self, path: str):
         conf = SparkConf()
         conf.set("spark.local.dir", self.tmp_dir)
 
-        spark = SparkSession.builder.config(conf=conf).getOrCreate()
-        spark.sparkContext.setLogLevel("ERROR")
-        return spark.read.csv(path, header=True)
+        self.spark = SparkSession.builder.config(conf=conf).getOrCreate()
+        self.spark.sparkContext.setLogLevel("ERROR")
+
+    def _loader(self, path: str):
+        return self.spark.read.csv(path, header=True)
 
     def groupby(self, dtype: str):
         df0 = self._loader(self.paths[0])
 
         st = time()
-        df0.groupby(f"group_{dtype}").agg({"index_int": "count"}).collect()
+        res = df0.groupby(f"group_{dtype}").agg({"index_int": "count"}).collect()
         en = time()
 
-        return en - st
+        return en - st, res
 
     def join(self, dtype: str):
         df0 = self._loader(self.paths[0])
         df1 = self._loader(self.paths[1])
 
         st = time()
-        df0.join(df1, on=f"index_{dtype}", how="inner").collect()
+        res = df0.join(df1, on=f"index_{dtype}", how="inner").collect()
         en = time()
 
-        return en - st
+        return en - st, res
 
     def aggregate(self, dtype: str):
         df0 = self._loader(self.paths[0])
 
         st = time()
-        df0.select(f"value_{dtype}_0").agg(f.sum(f"value_{dtype}_0")).collect()
+        res = df0.select(f"value_{dtype}_0").agg(f.sum(f"value_{dtype}_0")).collect()
         en = time()
 
-        return en - st
-
-    def __del__(self):
-        try:
-            shutil.rmtree(self.tmp_dir)
-        except FileNotFoundError:
-            pass
+        return en - st, res

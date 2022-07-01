@@ -5,10 +5,10 @@ from abc import ABC, abstractmethod
 class BaseOperator(ABC):
     def __init__(self, paths: Tuple[str, str]):
         self.paths = paths
+        self.last_result = None
 
-    @staticmethod
     @abstractmethod
-    def _loader(path: str):
+    def _loader(self, path: str):
         raise NotImplementedError
 
     @abstractmethod
