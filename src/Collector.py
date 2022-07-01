@@ -12,8 +12,11 @@ class EvalData:
     col_dtype: str
     dataset_p: str
     dataset_s: Optional[str]
-    time: float
+    time: Optional[float]
     exception: Optional[str]
+
+    def filename(self):
+        return "_".join([self.library, self.operation, self.col_dtype])
 
 
 class Collector:
@@ -24,8 +27,7 @@ class Collector:
         self.dirpath = dirpath
 
     def save(self, record: EvalData):
-        filename = "_".join([record.library, record.operation, record.col_dtype])
         time = datetime.now().isoformat()
-        filepath = os.path.join(self.dirpath, f"{filename}__{time}.json")
+        filepath = os.path.join(self.dirpath, f"{record.filename()}__{time}.json")
         with open(filepath, "w") as f:
             json.dump(asdict(record), f, indent=2)

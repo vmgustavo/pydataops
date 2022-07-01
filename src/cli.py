@@ -135,11 +135,28 @@ def create_data(ctx, rows, groups, overwrite):
     type=int,
     help="Number of samples to execute for each operation specified",
 )
+@click.option(
+    "--limit",
+    required=False,
+    default=None,
+    type=int,
+    help="Maximum number of samples to execute for each operation specified. Will skip steps if there is enough samples",
+)
 @click.pass_context
-def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples):
+def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples, limit):
     from src import execute_eval
 
-    execute_eval(ctx.obj["directory"], library, groupby, join, aggregate, rows, groups, samples)
+    execute_eval(
+        ctx.obj["directory"],
+        library,
+        groupby,
+        join,
+        aggregate,
+        rows,
+        groups,
+        samples,
+        limit,
+    )
 
 
 @cli.command()
@@ -233,6 +250,7 @@ def run_all(ctx, samples):
         rows=rows,
         groups=groups,
         samples=samples,
+        limit=samples,
     )
 
 

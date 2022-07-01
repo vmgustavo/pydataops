@@ -1,5 +1,6 @@
+import os
 import logging
-import os.path
+from glob import glob
 from itertools import product
 
 from tqdm import tqdm
@@ -8,10 +9,12 @@ from .DataPath import DataPath
 from .operators import BaseOperator
 from .Collector import EvalData, Collector
 
+logger = logging.getLogger("eval-library")
 
-def execute_eval(directory, library, groupby, join, aggregate, rows, groups, samples):
-    logger = logging.getLogger("eval-library")
-    collector = Collector(dirpath=os.path.join(directory, "data", "execs"))
+
+def execute_eval(directory, library, groupby, join, aggregate, rows, groups, samples, limit):
+    dirpath = os.path.join(directory, "data", "execs")
+    collector = Collector(dirpath=dirpath)
 
     mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
 
@@ -50,93 +53,98 @@ def execute_eval(directory, library, groupby, join, aggregate, rows, groups, sam
 
             for curr_dtype in groupby:
                 for _ in range(samples):
-                    logger.debug(
-                        f"library={curr_lib}"
-                        + f' | operation={"groupby"}'
-                        + f" | col_dtype={curr_dtype}"
-                        + f" | dataset_p={dataset_p}"
-                        + f" | dataset_s={None}"
-                    )
-
-                    try:
-                        exec_time, _ = curr_instance.groupby(curr_dtype)
-                        exception = None
-                    except Exception as e:
-                        exec_time = -1.0
-                        exception = e.__class__.__name__
-                        logger.error(str(e))
-
-                    collector.save(
-                        EvalData(
-                            library=curr_lib,
-                            operation="groupby",
-                            col_dtype=curr_dtype,
-                            time=exec_time,
-                            dataset_p=dataset_p,
-                            dataset_s=None,
-                            exception=exception,
-                        )
+                    _exec(
+                        "groupby",
+                        curr_lib,
+                        curr_dtype,
+                        dataset_p,
+                        dataset_s,
+                        dirpath,
+                        limit,
+                        curr_instance,
+                        collector,
                     )
                     pbar.update(1)
 
             for curr_dtype in join:
                 for _ in range(samples):
-                    logger.debug(
-                        f"library={curr_lib}"
-                        + f' | operation={"join"}'
-                        + f" | col_dtype={curr_dtype}"
-                        + f" | dataset_p={dataset_p}"
-                        + f" | dataset_s={None}"
-                    )
-
-                    try:
-                        exec_time, _ = curr_instance.join(curr_dtype)
-                        exception = None
-                    except Exception as e:
-                        exec_time = -1.0
-                        exception = e.__class__.__name__
-                        logger.error(str(e))
-
-                    collector.save(
-                        EvalData(
-                            library=curr_lib,
-                            operation="join",
-                            col_dtype=curr_dtype,
-                            time=exec_time,
-                            dataset_p=dataset_p,
-                            dataset_s=dataset_s,
-                            exception=exception,
-                        )
+                    _exec(
+                        "join",
+                        curr_lib,
+                        curr_dtype,
+                        dataset_p,
+                        dataset_s,
+                        dirpath,
+                        limit,
+                        curr_instance,
+                        collector,
                     )
                     pbar.update(1)
 
             for curr_dtype in aggregate:
                 for _ in range(samples):
-                    logger.debug(
-                        f"library={curr_lib}"
-                        + f' | operation={"aggregate"}'
-                        + f" | col_dtype={curr_dtype}"
-                        + f" | dataset_p={dataset_p}"
-                        + f" | dataset_s={None}"
-                    )
-
-                    try:
-                        exec_time, _ = curr_instance.aggregate(curr_dtype)
-                        exception = None
-                    except Exception as e:
-                        exec_time = -1.0
-                        exception = e.__class__.__name__
-                        logger.error(str(e))
-
-                    collector.save(
-                        EvalData(
-                            library=curr_lib,
-                            operation="aggregate",
-                            col_dtype=curr_dtype,
-                            time=exec_time,
-                            dataset_p=dataset_p,
-                            dataset_s=None,
-                            exception=exception,
-                        )
+                    _exec(
+                        "aggregate",
+                        curr_lib,
+                        curr_dtype,
+                        dataset_p,
+                        dataset_s,
+                        dirpath,
+                        limit,
+                        curr_instance,
+                        collector,
                     )
                     pbar.update(1)
+
+
+def _exec(
+    operation: str,
+    curr_lib: str,
+    curr_dtype: str,
+    dataset_p: str,
+    dataset_s: str,
+    dirpath: str,
+    limit: int,
+    curr_instance,
+    collector: Collector,
+):
+    logger.debug(
+        f"library={curr_lib}"
+        + f" | operation={operation}"
+        + f" | col_dtype={curr_dtype}"
+        + f" | dataset_p={dataset_p}"
+        + f" | dataset_s={dataset_s}"
+    )
+
+    fname = EvalData(
+        library=curr_lib,
+        operation=operation,
+        col_dtype=curr_dtype,
+        time=None,
+        dataset_p=dataset_p,
+        dataset_s=None,
+        exception=None,
+    ).filename()
+
+    if (limit is None) or (len(glob(os.path.join(dirpath, fname) + "*.json")) <= limit):
+        try:
+            exec_time, _ = getattr(curr_instance, operation)(curr_dtype)
+            exception = None
+        except Exception as e:
+            exec_time = -1.0
+            exception = e.__class__.__name__
+            logger.error(str(e))
+
+        collector.save(
+            EvalData(
+                library=curr_lib,
+                operation=operation,
+                col_dtype=curr_dtype,
+                time=exec_time,
+                dataset_p=dataset_p,
+                dataset_s=None,
+                exception=exception,
+            )
+        )
+    else:
+        logger.info(f"Maximum number of samples reached, skipping {fname}")
