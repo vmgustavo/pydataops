@@ -13,7 +13,7 @@ logger = logging.getLogger("eval-library")
 
 
 def execute_eval(directory, library, groupby, join, aggregate, rows, groups, samples, limit):
-    dirpath = os.path.join(directory, "data", "execs")
+    dirpath = os.path.join(directory, "execs")
     collector = Collector(dirpath=dirpath)
 
     mapper = {elem.__name__.lower(): elem for elem in BaseOperator.__subclasses__()}
@@ -57,6 +57,9 @@ def execute_eval(directory, library, groupby, join, aggregate, rows, groups, sam
                         "groupby",
                         curr_lib,
                         curr_dtype,
+                        curr_rows,
+                        curr_groups,
+                        groups_arg,
                         dataset_p,
                         dataset_s,
                         dirpath,
@@ -72,6 +75,9 @@ def execute_eval(directory, library, groupby, join, aggregate, rows, groups, sam
                         "join",
                         curr_lib,
                         curr_dtype,
+                        curr_rows,
+                        curr_groups,
+                        groups_arg,
                         dataset_p,
                         dataset_s,
                         dirpath,
@@ -87,6 +93,9 @@ def execute_eval(directory, library, groupby, join, aggregate, rows, groups, sam
                         "aggregate",
                         curr_lib,
                         curr_dtype,
+                        curr_rows,
+                        curr_groups,
+                        groups_arg,
                         dataset_p,
                         dataset_s,
                         dirpath,
@@ -101,6 +110,9 @@ def _exec(
     operation: str,
     curr_lib: str,
     curr_dtype: str,
+    curr_rows: int,
+    curr_groups: int,
+    groups_arg: float,
     dataset_p: str,
     dataset_s: str,
     dirpath: str,
@@ -116,17 +128,23 @@ def _exec(
         + f" | dataset_s={dataset_s}"
     )
 
-    fname = EvalData(
+    eval_data = EvalData(
         library=curr_lib,
         operation=operation,
         col_dtype=curr_dtype,
         time=None,
+        rows=curr_rows,
+        groups=curr_groups,
+        groups_arg=groups_arg,
         dataset_p=dataset_p,
-        dataset_s=None,
+        dataset_s=dataset_s,
         exception=None,
-    ).filename()
+    )
 
-    if (limit is None) or (len(glob(os.path.join(dirpath, fname) + "*.json")) <= limit):
+    fname = eval_data.filename()
+
+    execs = len(glob(os.path.join(dirpath, fname) + "*.json"))
+    if (limit is None) or (execs < limit):
         try:
             exec_time, _ = getattr(curr_instance, operation)(curr_dtype)
             exception = None
@@ -135,16 +153,12 @@ def _exec(
             exception = e.__class__.__name__
             logger.error(str(e))
 
-        collector.save(
-            EvalData(
-                library=curr_lib,
-                operation=operation,
-                col_dtype=curr_dtype,
-                time=exec_time,
-                dataset_p=dataset_p,
-                dataset_s=None,
-                exception=exception,
-            )
-        )
+        eval_data.time = exec_time
+        eval_data.exception = exception
+
+        collector.save(eval_data)
     else:
-        logger.info(f"Maximum number of samples reached, skipping {fname}")
+        logger.info(
+            f"Current number of samples ({execs}) reached the limit ({limit}),"
+            + f" skipping {fname}"
+        )

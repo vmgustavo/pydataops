@@ -10,13 +10,24 @@ class EvalData:
     library: str
     operation: str
     col_dtype: str
+    rows: int
+    groups: int
+    groups_arg: float
     dataset_p: str
     dataset_s: Optional[str]
     time: Optional[float]
     exception: Optional[str]
 
     def filename(self):
-        return "_".join([self.library, self.operation, self.col_dtype])
+        return "_".join(
+            [
+                self.library,
+                self.operation,
+                self.col_dtype,
+                str(self.rows),
+                str(self.groups),
+            ]
+        )
 
 
 class Collector:

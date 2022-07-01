@@ -140,7 +140,10 @@ def create_data(ctx, rows, groups, overwrite):
     required=False,
     default=None,
     type=int,
-    help="Maximum number of samples to execute for each operation specified. Will skip steps if there is enough samples",
+    help=(
+        "Maximum number of samples to execute for each operation specified."
+        + " Will skip steps if there is enough samples"
+    ),
 )
 @click.pass_context
 def eval_library(ctx, library, groupby, join, aggregate, rows, groups, samples, limit):
