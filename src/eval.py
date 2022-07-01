@@ -63,6 +63,7 @@ def execute_eval(directory, library, groupby, join, aggregate, rows, groups, sam
                     except Exception as e:
                         exec_time = -1.0
                         exception = e.__class__.__name__
+                        logger.error(str(e))
 
                     collector.save(
                         EvalData(
@@ -93,6 +94,7 @@ def execute_eval(directory, library, groupby, join, aggregate, rows, groups, sam
                     except Exception as e:
                         exec_time = -1.0
                         exception = e.__class__.__name__
+                        logger.error(str(e))
 
                     collector.save(
                         EvalData(
@@ -123,6 +125,7 @@ def execute_eval(directory, library, groupby, join, aggregate, rows, groups, sam
                     except Exception as e:
                         exec_time = -1.0
                         exception = e.__class__.__name__
+                        logger.error(str(e))
 
                     collector.save(
                         EvalData(
