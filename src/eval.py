@@ -124,8 +124,9 @@ def _exec(
         f"library={curr_lib}"
         + f" | operation={operation}"
         + f" | col_dtype={curr_dtype}"
-        + f" | dataset_p={dataset_p}"
-        + f" | dataset_s={dataset_s}"
+        + f" | rows={curr_rows}"
+        + f" | groups={curr_groups}"
+        + f" | groups_arg={groups_arg}"
     )
 
     eval_data = EvalData(
