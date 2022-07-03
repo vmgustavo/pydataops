@@ -23,6 +23,7 @@ dask = { version = "<2022.6.1", extras = ["complete"] }
 vaex = "^4.9.2"
 polars = "^0.13.50"
 protobuf = "<3.20"
+pickle5 = ">=0.0.12"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.19.0"
