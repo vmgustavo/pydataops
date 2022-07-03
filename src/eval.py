@@ -152,6 +152,7 @@ def _exec(
         except Exception as e:
             exec_time = -1.0
             exception = e.__class__.__name__
+            print(str(e))
             logger.error(str(e))
 
         eval_data.time = exec_time
