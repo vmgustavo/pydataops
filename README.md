@@ -22,3 +22,7 @@ This shall test:
 |     Memory | ~ 12GB                         |
 | Hard Drive | ~ 30GB                         |
 |            |                                |
+
+---
+
+<sub>Project started during the 2022/01 class of Planejamento e Análise de Experimentos (Planning and Analysis of Experiments) at the Universidade Federal de Minas Gerais (Federal University of Minas Gerais)</sub>
