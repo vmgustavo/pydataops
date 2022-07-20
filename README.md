@@ -8,9 +8,22 @@ necessary.
 
 This shall test:
 
-* multiple data sizes (`Mib`, `Gib`)
+* multiple data sizes (`1E3`, `1E6`)
 * multiple data operations (`join`, `groupby`, `aggregate`)
 * multiple data types (`string`, `integer`, `float`)
+
+## Data Processing Libraries
+
+* [x] `pandas`
+* [x] `pyspark`
+* [x] `polars`
+* [x] `modin-dask`
+* [x] `modin-ray`
+* [x] `vaex`
+* [ ] `pyarrow`
+* [ ] `koalas`
+* [ ] `datatable`
+* [ ] `fugue`
 
 ## Test Hardware
 
@@ -25,4 +38,6 @@ This shall test:
 
 ---
 
-<sub>Project started during the 2022/01 class of Planejamento e Análise de Experimentos (Planning and Analysis of Experiments) at the Universidade Federal de Minas Gerais (Federal University of Minas Gerais)</sub>
+<sub>Project started during the 2022/01 class of Planejamento e Análise de
+Experimentos (Planning and Analysis of Experiments) at the Universidade Federal
+de Minas Gerais (Federal University of Minas Gerais)</sub>
